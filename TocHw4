@@ -1,0 +1,185 @@
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.OutputStream;
+import java.net.URL;
+import java.nio.charset.Charset;
+import java.util.ArrayList;
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+import org.json.JSONTokener;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+
+class Jsonreader
+{
+	public JSONObject obj;
+	public ArrayList<String> str_list0 = new ArrayList<String>();
+	public ArrayList<String> str_list1 = new ArrayList<String>();
+	public Jsonreader(URL url) throws IOException, JSONException
+	{
+		int [][] month= new int[1000][1000] ;
+		int road = 0;
+		int reg1 = 0;
+		int message;
+		int [] max =new int[1000];
+		int [] min =new int[1000];
+		int []count= new int [1000];
+		int road_num=0;
+		int street_num=0;
+		int big_street_num=0;
+		int lane_num=0;
+		int i;
+		int[] time = new int[1000];
+		String str="";
+		String str1="";
+		String str2="";
+		String str3="土地區段位置或建物區門牌";
+		String str4="總價元";
+		String str5="交易年月";
+		String reg="";
+		obj = new JSONObject();
+		InputStream in = url.openStream();
+		InputStreamReader read = null;
+		read = new InputStreamReader(in, "UTF-8");
+		BufferedReader br = new BufferedReader(read);
+		boolean flag = false,flag2=false,flag3=true;
+		while ((message = br.read()) != -1) {
+			 if (((char)message) != '\n')
+			 {
+				if(!(message==58 ||message==123 || message==125 || message==34 || message ==44 || message==91 || message==93))
+				{
+					str = str + (char)message;
+					//System.out.println(str);
+				}
+				else if(message == 58 )//:
+				{
+
+
+					str1 = str;
+					str = "";
+				}
+				else if(message == 44)//,
+				{
+
+					str2 = str;
+					obj.put(str1,str2);
+					str = "";
+				}
+				else if(message == 125)//}
+				{
+					int flag1 = 0;//路名
+
+					str2 = str;
+					obj.put(str1,str2 );
+					str = obj.getString(str3);
+					if(str.indexOf("路")!=-1){
+						road_num=str.lastIndexOf("路");
+						str = str.substring(0,road_num+1);
+					}
+					else if(str.indexOf("街")!=-1){
+						street_num=str.lastIndexOf("街");
+						str = str.substring(0,street_num+1);
+
+
+					}else if(str.indexOf("大道")!=-1){
+						big_street_num=str.lastIndexOf("大道");
+						str = str.substring(0,big_street_num+1);
+
+					}
+					else if(str.indexOf("巷")!=-1){
+						lane_num=str.lastIndexOf("巷");
+						str = str.substring(0,lane_num+1);
+
+					}
+					else{
+						flag1 = 1;
+					}
+					if(flag1 !=1){
+
+						if(str_list0.indexOf(str)==-1){//路名未出現
+							try{
+							str_list0.add(str);//路名
+							reg=obj.getString(str5);
+
+							str_list1.add(reg);
+							int xx = str_list0.indexOf(str);
+							int pri = Integer.parseInt((String) obj.get(str4));
+							month[xx][0]=Integer.parseInt(reg);
+							if(pri!=0)
+							{
+							max[xx] = pri;
+							min[xx] = pri;
+							//System.out.println(pri);
+							}
+							}catch(Exception e){;}
+
+
+						}
+
+						else{
+							int x=str_list0.indexOf(str);//找出已經有的路
+							reg=(String)obj.get(str5);
+							for(i=0;month[x][i]!=0;i++){//月份未出現
+								if(month[x][i] == Integer.parseInt(reg))
+									flag3=false;
+								if(Integer.parseInt((String) obj.get(str4))<=min[x] && Integer.parseInt((String) obj.get(str4))>0){
+									min[x] = Integer.parseInt((String) obj.get(str4));
+								}
+								if(Integer.parseInt((String) obj.get(str4))>= max[x]){
+									max[x] = Integer.parseInt((String) obj.get(str4));
+									}
+
+
+								}
+							if(flag3){//月份有出現的
+								month[x][i]=Integer.parseInt(reg);
+								if(Integer.parseInt((String) obj.get(str4))<=min[x] && Integer.parseInt((String) obj.get(str4))>0){
+									min[x] = Integer.parseInt((String) obj.get(str4));
+								}
+								if(Integer.parseInt((String) obj.get(str4))>= max[x]){
+									max[x] = Integer.parseInt((String) obj.get(str4));
+									}
+							}flag3=true;
+						}
+					}
+					str = "";
+				}
+			 }
+				//arr.put(str);
+		   }
+		for(int q=0;q<str_list0.size();q++)
+			for(int u=0;month[q][u]!=0;u++){
+				count[q]++;
+			}
+
+		for(int q=0;q<str_list0.size();q++){
+			if(count[q]>road){
+				road = count[q];
+				reg1 =q;
+			}
+
+		}
+		for(int q=0;q<str_list0.size();q++){
+			if(count[q]==road){
+				System.out.println(str_list0.get(q)+","+"最高成交價:"+max[q]+","+"最低成交價:"+min[q]);
+			}
+
+		}
+		
+		read.close();
+		br.close();
+		in.close();
+	}
+}
+public class TocHW4 {
+  public static void main(String[] args) throws IOException, JSONException, InterruptedException {
+	  	URL url = null;
+		url = new URL(args[0]);
+		Jsonreader jr = new Jsonreader(url);
+		//System.out.println(jr.str_list0);
+  }
+}
