@@ -179,7 +179,7 @@ class Jsonreader
 		in.close();
 	}
 }
-public class TocHW4 {
+public class TocHw4 {
   public static void main(String[] args) throws IOException, JSONException, InterruptedException {
 	  	URL url = null;
 		url = new URL(args[0]);
